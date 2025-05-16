@@ -31,6 +31,7 @@ public class JailMenu: RaCustomMenuExiled.API.Provider
                                 new DummyAction($"{pl.Nickname}", () =>
                                 {
                                     existingRoom.RemovePlayer(pl);
+                                    Provider.RemoveActionDynamic($"Jail/Room: {room.id}", pl.Nickname);
                                 })
                             });
                         }
