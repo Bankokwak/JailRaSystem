@@ -13,12 +13,11 @@ public class Plugin : Plugin<Config>
 
     public static Plugin Singleton;
 
-    private static EventHandlers Handlers;
-
     public override void OnEnabled()
     {
         Singleton = this;
-        Handlers = new EventHandlers();
+        
+        EventHandlers.Registered();
 
         Provider.RegisterAllProviders();
         
@@ -28,7 +27,9 @@ public class Plugin : Plugin<Config>
     public override void OnDisabled()
     {
         Singleton = null;
-        Handlers = null;
+
+        EventHandlers.UnRegistered();
+        
         base.OnDisabled();
     }
 }
