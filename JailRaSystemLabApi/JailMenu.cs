@@ -1,18 +1,18 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Exiled.API.Enums;
-using Exiled.API.Features;
-using Exiled.Loader.Features.Configs;
-using Exiled.Permissions.Extensions;
+using LabApi.Features.Permissions;
+using LabApi.Features.Wrappers;
 using MEC;
 using NetworkManagerUtils.Dummies;
 using PlayerRoles;
-using RaCustomMenuExiled.API;
+using RaCustomMenuLabApi.API;
 using UnityEngine;
 using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
+using Logger = LabApi.Features.Console.Logger;
 
-namespace JailRaSystem;
+namespace JailRaSystemLabApi;
 
 public class JailMenu: Provider
 {
@@ -47,7 +47,7 @@ public class JailMenu: Provider
                         }
                         else
                         {
-                            Log.Warn($"Room ID {room.id} not found!");
+                            Logger.Warn($"Room ID {room.id} not found!");
                         }
                     }),
                     new DummyAction("Delete Room", () =>
@@ -82,7 +82,7 @@ public class JailMenu: Provider
             new DummyAction("Add Room Position", () =>
             {
                 Player pl = Player.Get(hub);
-                if (pl.CheckPermission("jail.add"))
+                if (pl.HasPermissions("jail.add"))
                 {
                     YamlWrite.AddRoomPosition(pl.Position);
                 }
@@ -120,7 +120,7 @@ public class RoomManager
     {
         if(players.ContainsKey(player))return;
         players.Add(player, new Data(player));
-        player.Role.Set(RoleTypeId.Tutorial);
+        player.SetRole(RoleTypeId.Tutorial);
         if (RoomPostion != Vector3.zero)
         {
             Timing.CallDelayed(0.1f, () =>
@@ -148,7 +148,7 @@ public class Data
 
     public Data(Player player)
     {
-        Role = player.Role.Type;
+        Role = player.Role;
         Position = player.Position;
         Health = player.Health;
         ItemTypes = player.Items.Select(i => i.Type).ToList();
@@ -157,7 +157,7 @@ public class Data
 
     public void Recover(Player player)
     {
-        player.Role.Set(Role, SpawnReason.Respawn, RoleSpawnFlags.None);
+        player.SetRole(Role, RoleChangeReason.Respawn, RoleSpawnFlags.None);
 
         Timing.CallDelayed(1f, () =>
         {
@@ -167,7 +167,7 @@ public class Data
                 player.AddItem(itemType);
 
             foreach (var ammo in AmmoTypes)
-                player.AddAmmo((AmmoType)ammo.Key, ammo.Value);
+                player.AddAmmo(ammo.Key, ammo.Value);
 
             player.Position = Position;
         });
@@ -199,7 +199,7 @@ class YamlWrite
 {
     public static void AddRoomPosition(Vector3 position)
     {
-        string filePath = Plugin.Singleton.ConfigPath;
+        string filePath = Path.Combine(Directory.GetCurrentDirectory() + $"LabAPI/configs/{Server.Port}/JailRaSystemLabApi/config.yml");
 
         var deserializer = new DeserializerBuilder()
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
@@ -222,6 +222,6 @@ class YamlWrite
             serializer.Serialize(writer, config);
         }
 
-        Log.Info("Room added with succes");
+        Logger.Info("Room added with succes");
     }
 }

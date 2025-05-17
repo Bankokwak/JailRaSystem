@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JailRaSystem", "JailRaSystem\JailRaSystem\JailRaSystem.csproj", "{965AC01B-E0CB-403C-83E4-7D94E1EE0249}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JailRaSystemExiled", "JailRaSystemExiled\JailRaSystemExiled.csproj", "{965AC01B-E0CB-403C-83E4-7D94E1EE0249}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JailRaSystemLabApi", "JailRaSystemLabApi\JailRaSystemLabApi.csproj", "{965AC01B-E0CB-403C-83E4-7D94E1EE0249}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
