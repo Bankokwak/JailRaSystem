@@ -5,7 +5,7 @@
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-        <ProjectGuid>{965AC01B-E0CB-403C-83E4-7D94E1EE0249}</ProjectGuid>
+        <ProjectGuid>{A1B2C3D4-E5F6-7890-1234-56789ABCDEF0}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AppDesignerFolder>Properties</AppDesignerFolder>
         <RootNamespace>JailRaSystemExiled</RootNamespace>

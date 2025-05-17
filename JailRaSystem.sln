@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JailRaSystemExiled", "JailRaSystemExiled\JailRaSystemExiled.csproj", "{965AC01B-E0CB-403C-83E4-7D94E1EE0249}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JailRaSystemExiled", "JailRaSystemExiled\JailRaSystemExiled.csproj", "{A1B2C3D4-E5F6-7890-1234-56789ABCDEF0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JailRaSystemLabApi", "JailRaSystemLabApi\JailRaSystemLabApi.csproj", "{965AC01B-E0CB-403C-83E4-7D94E1EE0249}"
 EndProject
@@ -14,5 +14,7 @@ Global
 		{965AC01B-E0CB-403C-83E4-7D94E1EE0249}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{965AC01B-E0CB-403C-83E4-7D94E1EE0249}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{965AC01B-E0CB-403C-83E4-7D94E1EE0249}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-E5F6-7890-1234-56789ABCDEF0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-E5F6-7890-1234-56789ABCDEF0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 EndGlobal
