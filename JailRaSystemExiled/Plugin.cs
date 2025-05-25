@@ -8,8 +8,8 @@ public class Plugin : Plugin<Config>
 {
     public override string Name => "JailRaSystemExiled";
     public override string Author => "Bankokwak";
-    public override Version Version => new Version(1, 0, 0);
-    public override Version RequiredExiledVersion { get; } = new Version(9,8,0);
+    public override Version Version => new Version(1, 1, 0);
+    public override Version RequiredExiledVersion { get; } = new Version(9,6,0);
 
     public static Plugin Singleton;
 
