@@ -3,15 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using CustomPlayerEffects;
-using Discord;
-using GameCore;
 using LabApi.Features.Permissions;
 using LabApi.Features.Wrappers;
 using MEC;
 using NetworkManagerUtils.Dummies;
 using PlayerRoles;
 using RaCustomMenuLabApi.API;
-using RelativePositioning;
 using UnityEngine;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
@@ -71,7 +68,7 @@ public class JailMenu : Provider
                         JailRoomRegistry.Rooms.Remove(room.id);
                         Provider.UnregisterDynamicProvider($"Jail/Room: {room.id}");
                     })
-                });
+                },null);
             }),
             new DummyAction("Clear All Room", () =>
             {
@@ -189,7 +186,7 @@ public class RoomManager
             }
             catch (Exception e)
             {
-                LabApi.Features.Console.Logger.Info($"{nameof(DoUnJail)}: {e}");
+                Logger.Info($"{nameof(DoUnJail)}: {e}");
             }
         }
         else
@@ -262,6 +259,6 @@ class YamlWrite
             serializer.Serialize(writer, config);
         }
 
-        Logger.Info("Room added with succes");
+        Logger.Debug("Room added with succes", config.Debug);
     }
 }

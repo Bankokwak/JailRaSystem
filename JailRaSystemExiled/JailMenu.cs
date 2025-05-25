@@ -9,7 +9,6 @@ using Exiled.API.Features.Items;
 using Exiled.CustomItems.API.Features;
 using Exiled.Loader.Features.Configs;
 using Exiled.Permissions.Extensions;
-using JailRaSystemExiled;
 using MEC;
 using NetworkManagerUtils.Dummies;
 using PlayerRoles;
@@ -72,7 +71,7 @@ public class JailMenu : Provider
                         JailRoomRegistry.Rooms.Remove(room.id);
                         Provider.UnregisterDynamicProvider($"Jail/Room: {room.id}");
                     })
-                });
+                }, null);
             }),
             new DummyAction("Clear All Room", () =>
             {
@@ -265,6 +264,6 @@ class YamlWrite
             serializer.Serialize(writer, config);
         }
 
-        Log.Info("Room added with succes");
+        Log.Debug("Room added with succes");
     }
 }
