@@ -1,20 +1,26 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using CustomPlayerEffects;
+using Discord;
+using GameCore;
 using LabApi.Features.Permissions;
 using LabApi.Features.Wrappers;
 using MEC;
 using NetworkManagerUtils.Dummies;
 using PlayerRoles;
 using RaCustomMenuLabApi.API;
+using RelativePositioning;
 using UnityEngine;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 using Logger = LabApi.Features.Console.Logger;
+using Random = UnityEngine.Random;
 
 namespace JailRaSystemLabApi;
 
-public class JailMenu: Provider
+public class JailMenu : Provider
 {
     public override List<DummyAction> AddAction(ReferenceHub hub)
     {
@@ -31,16 +37,17 @@ public class JailMenu: Provider
                         if (JailRoomRegistry.Rooms.TryGetValue(room.id, out var existingRoom))
                         {
                             Player pl = Player.Get(referenceHub);
-                            if(existingRoom.players.ContainsKey(pl))return;
-                            existingRoom.AddPlayer(pl);
+                            if (existingRoom.players.ContainsKey(pl.UserId)) return;
+                            existingRoom.DoJail(pl);
                             Provider.AddActionDynamic($"Jail/Room: {room.id}", new List<DummyAction>
                             {
                                 new DummyAction($"{pl.Nickname}", () =>
                                 {
-                                    if (existingRoom.players.ContainsKey(pl))
+                                    if (existingRoom.players.ContainsKey(pl.UserId))
                                     {
-                                        existingRoom.RemovePlayer(pl);
+                                        existingRoom.DoUnJail(pl);
                                     }
+
                                     Provider.RemoveActionDynamic($"Jail/Room: {room.id}", pl.Nickname);
                                 })
                             });
@@ -56,9 +63,11 @@ public class JailMenu: Provider
                         {
                             foreach (var player in existingRoom.players.Keys.ToList())
                             {
-                                existingRoom.RemovePlayer(player);
+                                Player ply = Player.Get(player);
+                                existingRoom.DoUnJail(ply);
                             }
                         }
+
                         JailRoomRegistry.Rooms.Remove(room.id);
                         Provider.UnregisterDynamicProvider($"Jail/Room: {room.id}");
                     })
@@ -72,11 +81,14 @@ public class JailMenu: Provider
                     {
                         foreach (var player in existingRoom.players.Keys.ToList())
                         {
-                            existingRoom.RemovePlayer(player);
+                            Player ply = Player.Get(player);
+                            existingRoom.DoUnJail(ply);
                         }
                     }
+
                     Provider.UnregisterDynamicProvider($"Jail/Room: {room.Key}");
                 }
+
                 JailRoomRegistry.Rooms.Clear();
             }),
             new DummyAction("Add Room Position", () =>
@@ -97,16 +109,16 @@ public class JailMenu: Provider
 public class RoomManager
 {
     public int id { get; set; }
-    public Dictionary<Player, Data> players { get; set; }
+    public Dictionary<string, Jailed> players { get; set; }
 
     private static int RoomIdCounter = 1;
-    
+
     private Vector3 RoomPostion { get; set; } = Vector3.zero;
 
     public RoomManager()
     {
         this.id = RoomIdCounter++;
-        this.players = new Dictionary<Player, Data>();
+        this.players = new Dictionary<string, Jailed>();
 
         var positions = Plugin.Singleton.Config.room_postion;
         if (positions != null && positions.Count > 0)
@@ -116,77 +128,104 @@ public class RoomManager
         }
     }
 
-    public void AddPlayer(Player player)
+
+    public void DoJail(Player player, bool skipadd = false)
     {
-        if(players.ContainsKey(player))return;
-        players.Add(player, new Data(player));
-        player.SetRole(RoleTypeId.Tutorial);
-        if (RoomPostion != Vector3.zero)
+        if (players.ContainsKey(player.UserId))
+            return;
+        if (!skipadd)
         {
-            Timing.CallDelayed(0.1f, () =>
+            players.Add(player.UserId, new Jailed
             {
-                player.Position = RoomPostion;
+                Health = player.Health,
+                Position = player.Position,
+                Items = player.Items.ToList(),
+                Effects = player.ActiveEffects.ToList(),
+                Name = player.Nickname,
+                Role = player.Role,
+                CurrentRound = true,
+                Ammo = player.Ammo,
             });
         }
+
+        if (player.IsOverwatchEnabled)
+            player.IsOverwatchEnabled = false;
+        player.Ammo.Clear();
+        player.Inventory.SendAmmoNextFrame = true;
+
+        player.ClearInventory(false);
+        player.SetRole(RoleTypeId.Tutorial, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.UseSpawnpoint);
     }
 
-    public void RemovePlayer(Player player)
+    public void DoUnJail(Player player)
     {
-        if(!players.ContainsKey(player))return;
-        players[player].Recover(player);
-        players.Remove(player);
+        if (!players.TryGetValue(player.UserId, out Jailed jail))
+            return;
+        if (jail.CurrentRound)
+        {
+            player.SetRole(jail.Role, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.None);
+            try
+            {
+                Timing.CallDelayed(1f, () =>
+                {
+                    player.ClearInventory();
+                    foreach (Item item in jail.Items)
+                    {
+                        player.AddItem(item.Type);
+                    }
+
+                    player.Position = jail.Position;
+                    player.Health = jail.Health;
+                    foreach (KeyValuePair<ItemType, ushort> kvp in jail.Ammo)
+                        player.AddAmmo(kvp.Key, kvp.Value);
+                    foreach (var effect in jail.Effects)
+                    {
+                        player.EnableEffect(effect);
+                    }
+
+                    player.Inventory.SendItemsNextFrame = true;
+                    player.Inventory.SendAmmoNextFrame = true;
+                });
+            }
+            catch (Exception e)
+            {
+                LabApi.Features.Console.Logger.Info($"{nameof(DoUnJail)}: {e}");
+            }
+        }
+        else
+        {
+            player.SetRole(RoleTypeId.Spectator);
+        }
+
+        players.Remove(player.UserId);
     }
 }
 
-public class Data
+public class Jailed
 {
-    public RoleTypeId Role { get; set; }
-    public Vector3 Position { get; set; }
-    public float Health { get; set; }
-    public List<ItemType> ItemTypes { get; set; }
-    public Dictionary<ItemType, ushort> AmmoTypes { get; set; }
-
-    public Data(Player player)
-    {
-        Role = player.Role;
-        Position = player.Position;
-        Health = player.Health;
-        ItemTypes = player.Items.Select(i => i.Type).ToList();
-        AmmoTypes = new Dictionary<ItemType, ushort>(player.Ammo);
-    }
-
-    public void Recover(Player player)
-    {
-        player.SetRole(Role, RoleChangeReason.Respawn, RoleSpawnFlags.None);
-
-        Timing.CallDelayed(1f, () =>
-        {
-            player.Health = Health;
-
-            foreach (var itemType in ItemTypes)
-                player.AddItem(itemType);
-
-            foreach (var ammo in AmmoTypes)
-                player.AddAmmo(ammo.Key, ammo.Value);
-
-            player.Position = Position;
-        });
-    }
+    public string Name;
+    public List<Item> Items;
+    public List<StatusEffectBase> Effects;
+    public RoleTypeId Role;
+    public Vector3 Position;
+    public float Health;
+    public Dictionary<ItemType, ushort> Ammo;
+    public bool CurrentRound;
 }
 
 public static class JailRoomRegistry
 {
     public static readonly Dictionary<int, RoomManager> Rooms = new();
-    
+
     public static void DeletePlayer(Player player)
     {
         foreach (var room in Rooms)
         {
-            if(JailRoomRegistry.Rooms.TryGetValue(room.Key, out var existingRoom))
+            if (JailRoomRegistry.Rooms.TryGetValue(room.Key, out var existingRoom))
             {
-                if (existingRoom.players.ContainsKey(player))
+                if (existingRoom.players.ContainsKey(player.UserId))
                 {
-                    existingRoom.players.Remove(player);
+                    existingRoom.players.Remove(player.UserId);
                     Provider.RemoveActionDynamic($"Jail/Room: {room.Key}", player.Nickname);
                     return;
                 }
@@ -199,7 +238,8 @@ class YamlWrite
 {
     public static void AddRoomPosition(Vector3 position)
     {
-        string filePath = Path.Combine(Directory.GetCurrentDirectory() + $"LabAPI/configs/{Server.Port}/JailRaSystemLabApi/config.yml");
+        string filePath = Path.Combine(Directory.GetCurrentDirectory() +
+                                       $"LabAPI/configs/{Server.Port}/JailRaSystemLabApi/config.yml");
 
         var deserializer = new DeserializerBuilder()
             .WithNamingConvention(UnderscoredNamingConvention.Instance)
