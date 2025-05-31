@@ -15,9 +15,9 @@ Download `RaCustomMenuLabApi.dll` in the [latest](https://github.com/Bankokwak/J
 And you need to add `0Harmony.dll` into your `./LabAPI/dependencies/global(or {port})`.
 
 # What is this plugin for ?
-JailRaSystem is a plugin who help to the moderation, using the [RaCustomMenu plugin](https://github.com/Bankokwak/RaCustomMenu/tree/master). You can create room, clear all room, add room spawn postion if you add in the permissions.yml (`jail.add`), add player to jail clear the room and kick a player from the jail.
+JailRaSystem is a plugin that helps with moderation, using the [RaCustomMenu plugin](https://github.com/Bankokwak/RaCustomMenu/tree/master). You can create room, clear all room, add room spawn postion if you add in the permissions.yml (`jail.add`), add player to jail clear the room and kick a player from the jail.
 
 ## Config
-In config you can change or delete Room spawn position.
+In the config you can change or delete Room spawn position.
 
-## if you see a bug, please report this [here](https://github.com/Bankokwak/JailRaSystem/issues) or in my mp ( bankokwak ).
+## if you see a bug, please report this [here](https://github.com/Bankokwak/JailRaSystem/issues) or in my Discord dm ( bankokwak ).
