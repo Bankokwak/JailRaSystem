@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using UnityEngine;
 
 namespace JailRaSystemLabApi;
@@ -12,6 +13,9 @@ public class Config
     {
         new RoomPosition(new Vector3(40f, 314.080f, -32.600f))
     };
+    
+    [Description("True: when you jail a player, he keeps his role. False: when you jail a player, he set in tutorial.")]
+    public bool EnableKeepRole { get; set; } = false;
 }
 
 public class RoomPosition

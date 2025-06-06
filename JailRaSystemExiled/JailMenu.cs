@@ -142,7 +142,6 @@ public class RoomManager
                 Effects = player.ActiveEffects.Select(x => new Effect(x)).ToList(),
                 Name = player.Nickname,
                 Role = player.Role.Type,
-                CurrentRound = true,
                 Ammo = player.Ammo.ToDictionary(x => x.Key.GetAmmoType(), x => x.Value),
             });
         }
@@ -153,53 +152,47 @@ public class RoomManager
         player.Inventory.SendAmmoNextFrame = true;
 
         player.ClearInventory(false);
-        player.Role.Set(RoleTypeId.Tutorial, RoleSpawnFlags.UseSpawnpoint);
+        player.Position = this.RoomPostion;
+        if (!Plugin.Singleton.Config.EnableKeepRole)
+            player.Role.Set(RoleTypeId.Tutorial, SpawnReason.ForceClass, RoleSpawnFlags.None);
     }
 
     public void DoUnJail(Player player)
     {
         if (!players.TryGetValue(player.UserId, out Jailed jail))
             return;
-        if (jail.CurrentRound)
+        player.Role.Set(jail.Role, RoleSpawnFlags.None);
+        try
         {
-            player.Role.Set(jail.Role, RoleSpawnFlags.None);
-            try
+            Timing.CallDelayed(1f, () =>
             {
-                Timing.CallDelayed(1f, () =>
+                player.ClearInventory();
+                foreach (Item item in jail.Items)
                 {
-                    player.ClearInventory();
-                    foreach (Item item in jail.Items)
+                    if (CustomItem.TryGet(item, out CustomItem ci))
                     {
-                        if (CustomItem.TryGet(item, out CustomItem ci))
-                        {
-                            player.AddItem(item);
-                        }
-                        else
-                        {
-                            player.AddItem(item.Base);
-                        }
+                        player.AddItem(item);
                     }
+                    else
+                    {
+                        player.AddItem(item.Base);
+                    }
+                }
 
-                    player.Position = jail.RelativePosition.Position;
-                    player.Health = jail.Health;
-                    foreach (KeyValuePair<AmmoType, ushort> kvp in jail.Ammo)
-                        player.Ammo[kvp.Key.GetItemType()] = kvp.Value;
-                    player.SyncEffects(jail.Effects);
+                player.Position = jail.RelativePosition.Position;
+                player.Health = jail.Health;
+                foreach (KeyValuePair<AmmoType, ushort> kvp in jail.Ammo)
+                    player.Ammo[kvp.Key.GetItemType()] = kvp.Value;
+                player.SyncEffects(jail.Effects);
 
-                    player.Inventory.SendItemsNextFrame = true;
-                    player.Inventory.SendAmmoNextFrame = true;
-                });
-            }
-            catch (Exception e)
-            {
-                Log.Error($"{nameof(DoUnJail)}: {e}");
-            }
+                player.Inventory.SendItemsNextFrame = true;
+                player.Inventory.SendAmmoNextFrame = true;
+            });
         }
-        else
+        catch (Exception e)
         {
-            player.Role.Set(RoleTypeId.Spectator);
+            Log.Error($"{nameof(DoUnJail)}: {e}");
         }
-
         players.Remove(player.UserId);
     }
 }
@@ -234,7 +227,6 @@ public class Jailed
     public RelativePosition RelativePosition;
     public float Health;
     public Dictionary<AmmoType, ushort> Ammo;
-    public bool CurrentRound;
 }
 
 class YamlWrite

@@ -140,7 +140,6 @@ public class RoomManager
                 Effects = player.ActiveEffects.ToList(),
                 Name = player.Nickname,
                 Role = player.Role,
-                CurrentRound = true,
                 Ammo = player.Ammo,
             });
         }
@@ -151,49 +150,43 @@ public class RoomManager
         player.Inventory.SendAmmoNextFrame = true;
 
         player.ClearInventory(false);
-        player.SetRole(RoleTypeId.Tutorial, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.UseSpawnpoint);
+        player.Position = this.RoomPostion;
+        if (!Plugin.Singleton.Config.EnableKeepRole)
+            player.SetRole(RoleTypeId.Tutorial, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.None);
     }
 
     public void DoUnJail(Player player)
     {
         if (!players.TryGetValue(player.UserId, out Jailed jail))
             return;
-        if (jail.CurrentRound)
+        player.SetRole(jail.Role, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.None);
+        try
         {
-            player.SetRole(jail.Role, RoleChangeReason.RemoteAdmin, RoleSpawnFlags.None);
-            try
+            Timing.CallDelayed(1f, () =>
             {
-                Timing.CallDelayed(1f, () =>
+                player.ClearInventory();
+                foreach (Item item in jail.Items)
                 {
-                    player.ClearInventory();
-                    foreach (Item item in jail.Items)
-                    {
-                        player.AddItem(item.Type);
-                    }
+                    player.AddItem(item.Type);
+                }
 
-                    player.Position = jail.Position;
-                    player.Health = jail.Health;
-                    foreach (KeyValuePair<ItemType, ushort> kvp in jail.Ammo)
-                        player.AddAmmo(kvp.Key, kvp.Value);
-                    foreach (var effect in jail.Effects)
-                    {
-                        player.EnableEffect(effect);
-                    }
+                player.Position = jail.Position;
+                player.Health = jail.Health;
+                foreach (KeyValuePair<ItemType, ushort> kvp in jail.Ammo)
+                    player.AddAmmo(kvp.Key, kvp.Value);
+                foreach (var effect in jail.Effects)
+                {
+                    player.EnableEffect(effect);
+                }
 
-                    player.Inventory.SendItemsNextFrame = true;
-                    player.Inventory.SendAmmoNextFrame = true;
-                });
-            }
-            catch (Exception e)
-            {
-                Logger.Info($"{nameof(DoUnJail)}: {e}");
-            }
+                player.Inventory.SendItemsNextFrame = true;
+                player.Inventory.SendAmmoNextFrame = true;
+            });
         }
-        else
+        catch (Exception e)
         {
-            player.SetRole(RoleTypeId.Spectator);
+            Logger.Info($"{nameof(DoUnJail)}: {e}");
         }
-
         players.Remove(player.UserId);
     }
 }
@@ -207,7 +200,6 @@ public class Jailed
     public Vector3 Position;
     public float Health;
     public Dictionary<ItemType, ushort> Ammo;
-    public bool CurrentRound;
 }
 
 public static class JailRoomRegistry
