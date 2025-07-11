@@ -134,6 +134,7 @@ public class RoomManager
             return;
         if (!skipadd)
         {
+           
             players.Add(player.UserId, new Jailed
             {
                 Health = player.Health,
