@@ -17,6 +17,8 @@ public class EventHandlers
     
     private static void OnLeft(PlayerLeftEventArgs ev)
     {
+        if(ev.Player is null)
+            return;
         JailRoomRegistry.DeletePlayer(ev.Player);
     }
 }
